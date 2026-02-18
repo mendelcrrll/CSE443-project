@@ -1,11 +1,15 @@
 import json
 import re
+import os
 from collections import Counter
 from math import log
 
 # Load Data
 
-with open("pmdd.json", "r", encoding="utf-8") as f:
+BASE_DIR = os.path.dirname(__file__)
+json_path = os.path.join(BASE_DIR, "pmdd.json")
+
+with open(json_path, "r", encoding="utf-8") as f:
     data = json.load(f)
 
 documents = []
