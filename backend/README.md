@@ -1,18 +1,3 @@
-# Lightweight LangChain Backend (Prototype)
-
-This is a minimal backend scaffold for your multi-agent concept:
-- `yapper`
-- `definer`
-- `redditor`
-- `engager`
-- `auditor`
-
-It uses:
-- FastAPI for the API
-- LangChain + `langchain-openai` for LLM calls
-- Your existing `pmdd_search/pmdd.json` as a local Reddit thread source
-- A JSON file for lightweight persistence
-
 ## Quick start
 
 1. Create and activate a virtual environment.
