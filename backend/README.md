@@ -30,9 +30,11 @@ python -m uvicorn backend.app.main:app --reload
 
 ## Frontend CORS
 
-The backend currently allows local Vite origins:
+The backend currently allows these local origins:
 - `http://localhost:5173`
 - `http://127.0.0.1:5173`
+- `http://localhost:5500`
+- `http://127.0.0.1:5500`
 
 ## Example request
 

@@ -30,6 +30,7 @@ import {
   useMediaQuery,
 } from "@mui/material";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
+import ReactMarkdown from "react-markdown";
 import { fetchAgents, sendChat } from "./api";
 import type { AgentName, SaveBucket, SearchResult } from "./types";
 
@@ -296,7 +297,41 @@ export default function App() {
                     <Typography variant="caption" sx={{ opacity: 0.85 }}>
                       {item.role} via {item.agent}
                     </Typography>
-                    <Typography whiteSpace="pre-wrap">{item.text}</Typography>
+                    {item.role === "assistant" ? (
+                      <Box
+                        sx={{
+                          mt: 0.5,
+                          "& p": { my: 0.75 },
+                          "& ul, & ol": { pl: 3, my: 0.75 },
+                          "& li": { my: 0.25 },
+                          "& code": {
+                            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                            bgcolor: "rgba(0,0,0,0.08)",
+                            px: 0.5,
+                            borderRadius: 0.5,
+                          },
+                          "& pre": {
+                            m: 0,
+                            mt: 1,
+                            p: 1,
+                            overflowX: "auto",
+                            borderRadius: 1,
+                            bgcolor: "rgba(0,0,0,0.08)",
+                          },
+                          "& pre code": {
+                            bgcolor: "transparent",
+                            p: 0,
+                          },
+                          "& a": {
+                            color: item.role === "user" ? "inherit" : "primary.dark",
+                          },
+                        }}
+                      >
+                        <ReactMarkdown>{item.text}</ReactMarkdown>
+                      </Box>
+                    ) : (
+                      <Typography whiteSpace="pre-wrap">{item.text}</Typography>
+                    )}
                   </Paper>
 
                   {item.toolResults && item.toolResults.length > 0 && (

@@ -1,0 +1,219 @@
+* {
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f8f8f8;
+}
+
+.retro-page {
+  margin: 0 auto;
+  max-width: 960px;
+  padding: 20px 14px 40px;
+}
+
+h1 {
+  border: 3px solid;
+  border-color: green;
+  text-align: center;
+  background-color: rgb(224, 247, 228);
+  color: rgb(34, 34, 34);
+  width: min(680px, 90%);
+  margin-left: auto;
+  margin-right: auto;
+  padding: 10px;
+}
+
+#loginpage {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+#username {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  border: 1px solid;
+  padding: 8px;
+  width: min(360px, 92%);
+}
+
+button {
+  background-color: #0000ff;
+  border: none;
+  color: white;
+  padding: 5px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+
+#loginbutton {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  margin-top: 10px;
+}
+
+#welcome {
+  width: min(860px, 96%);
+  margin: 0 auto 10px;
+  font-weight: 700;
+}
+
+#available_rooms {
+  background-color: #ffc0cb;
+  padding: 10px;
+  width: min(860px, 96%);
+  margin: 0 auto 10px;
+}
+
+#available_rooms h4 {
+  margin: 4px 0;
+}
+
+.control-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+#currentroom {
+  width: min(860px, 96%);
+  margin: 0 auto 8px;
+  font-weight: 700;
+}
+
+#chat {
+  width: min(860px, 96%);
+  margin: 0 auto;
+}
+
+#chatlog {
+  min-height: 260px;
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid #333;
+  background: white;
+  padding: 10px;
+}
+
+#chatlog .message-body p,
+#chatlog .message-body ul,
+#chatlog .message-body ol,
+#chatlog .message-body blockquote,
+#chatlog .message-body pre,
+#chatlog .message-body h1,
+#chatlog .message-body h2,
+#chatlog .message-body h3,
+#chatlog .message-body h4,
+#chatlog .message-body h5,
+#chatlog .message-body h6 {
+  margin: 0.4rem 0;
+}
+
+#chatlog .message-body ul,
+#chatlog .message-body ol {
+  padding-left: 1.3rem;
+}
+
+#chatlog .message-body code {
+  background: #f1f1f1;
+  padding: 0.05rem 0.25rem;
+  border-radius: 3px;
+  font-family: Consolas, "Courier New", monospace;
+}
+
+#chatlog .message-body pre {
+  background: #f1f1f1;
+  border: 1px solid #d7d7d7;
+  border-radius: 4px;
+  padding: 0.5rem;
+  overflow-x: auto;
+}
+
+#chatlog .message-body pre code {
+  background: transparent;
+  padding: 0;
+}
+
+#chatlog .message-body blockquote {
+  border-left: 3px solid #999;
+  padding-left: 0.6rem;
+}
+
+#chatlog .message-body a {
+  color: #0a3cad;
+}
+
+#shortcuts {
+  width: 100%;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+#chat-form {
+  display: flex;
+  gap: 8px;
+}
+
+#messagevalue {
+  flex: 1;
+}
+
+#room-select,
+#new-room-name,
+#agent,
+#model,
+#save_to {
+  flex: 1;
+  min-width: 140px;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid #ddd;
+}
+
+.retro-error {
+  width: min(860px, 96%);
+  margin: 0 auto 10px;
+  border: 1px solid #b00020;
+  background: #ffd6dd;
+  color: #4a0010;
+  padding: 8px;
+}
+
+.line-user {
+  color: #1b5e20;
+}
+
+.line-assistant {
+  color: #6a1b9a;
+}
+
+.line-system {
+  color: #004a8f;
+}
+
+@media (max-width: 680px) {
+  #chat-form {
+    flex-direction: column;
+  }
+
+  #room-select,
+  #new-room-name,
+  #agent,
+  #model,
+  #save_to {
+    width: 100%;
+    min-width: 0;
+  }
+}
