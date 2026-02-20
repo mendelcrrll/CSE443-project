@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Retro Chatroom UI</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="retro-page">
+      <h1>AgnosticNet Chat Rooms</h1>
+
+      <div id="error" class="retro-error" hidden></div>
+
+      <div id="loginpage">
+        <input type="text" id="username" placeholder="Username" />
+        <button id="loginbutton">Join</button>
+      </div>
+
+      <section id="chat-ui" hidden>
+        <div id="welcome"></div>
+
+        <div id="available_rooms">
+          <h4>Chatrooms</h4>
+          <div class="control-row">
+            <select id="room-select"></select>
+            <button id="enter-room-btn" type="button">Enter Room</button>
+          </div>
+          <div class="control-row">
+            <input id="new-room-name" type="text" placeholder="New room name" />
+            <button id="create-room-btn" type="button">Create Room</button>
+          </div>
+
+          <h4>Agents</h4>
+          <div class="control-row">
+            <select id="agents" ></select>
+            <select id="save_to">
+              <option value="">No save</option>
+              <option value="journal">journal</option>
+              <option value="definitions">definitions</option>
+              <option value="threads">threads</option>
+              <option value="drafts">drafts</option>
+              <option value="audit_logs">audit_logs</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="currentroom">Room: General Chat</div>
+
+        <div id="chat">
+          <div id="chatlog"></div>
+          <br />
+          <div id="shortcuts">Chatrooms are saved per username in this browser.</div>
+          <form id="chat-form">
+            <input type="text" id="messagevalue" placeholder="Type a message" />
+            <button id="sendbutton" type="submit">send</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
