@@ -1,5 +1,67 @@
 # chronicA11y
 
+## Reflection & Analysis
+
+
+### Disability Justice Principle 1 **INTERSECTIONALITY**
+
+
+### Definition
+As this is the first listed disability justice, it is fitting that this project starts here. This principle begins with the statement from Sins Invalid: “We do not live single issue lives.” Intersectionality reminds us that disability is never experienced in isolation. Ableism is entangled with racism, sexism, classism, fatphobia, transphobia, and other systems of oppression. Disability justice insists that we recognize how these systems interact rather than treating disability as a standalone category.
+
+
+### Reflection
+Chronic illness especially illustrates this principle. It does not exist in a vacuum. It intersects with gender, race, income, immigration status, trauma history, and access to healthcare. The way someone’s symptoms are interpreted, believed, or dismissed often depends on these intersecting identities. For example, research consistently shows that women, particularly women of color, have their pain minimized or misattributed. The experience of illness is therefore shaped not just by biology, but by power.
+
+
+What we would like to represent in this project is that chronic illness is something that is entangled in so many personal identities and experiences. Traditional medical systems often attempt to isolate variables and reduce experiences to symptom checklists. While structure can be helpful, it can also flatten lived experience. There is a risk in trying to extract symptoms from context, as if they are purely mechanical signals detached from identity and environment.
+
+
+With this tool, we are not trying to untangle someone’s intersecting identities or reduce them to a medical abstraction. Instead, we are attempting to create space for narrative first. The journaling component allows the user to describe their experience in their own language before it is translated into standardized symptom terminology. This sequencing matters. It acknowledges that lived experience precedes medical language.
+
+
+How we reflect on intersectionality is the determining factor of the success of our project. AI systems can easily reproduce dominant biases embedded in medical data and online communities. If we are not careful, the tool could reinforce existing inequities rather than challenge them. How can we remain open to the possibility that there are many factors at play intermingling? Who is this system built for? Whose language is recognized as valid? Whose experiences are likely to be surfaced or ignored?
+
+
+I would argue that we are not trying to untangle these threads and rather allow them to be and support where we can. The success of this project depends on whether we can hold complexity without pretending to resolve it. Intersectionality reminds us that chronic illness is never just a medical issue. It is social, political, and deeply personal. Our responsibility is not to simplify that reality, but to design in a way that respects it.
+
+
+### Disability Justice Principle 2 - **RECONGIZING WHOLENESS**
+
+
+### Definition
+
+
+“People have inherent worth” is how Sins Invalid begins this principle. It is beautiful in its simplicity and powerful in its implication. It directly challenges a cultural norm that measures people by productivity, diagnosis, or usefulness. If you are not contributing in ways that society values, you are often treated as less than. Recognizing wholeness rejects that framework. It insists that people are complete, complex, and valuable beyond what they produce or what can be medically categorized.
+
+
+### Reflection
+
+
+I think this principle shows up in our project most clearly in what we are not trying to build. Diagnosis is not our goal. Traditional symptom checkers often push toward ranking possible conditions, reducing someone’s experience into probabilities and medical labels. That framing subtly communicates that clarity, certainty, and classification are what make an experience legitimate.
+
+
+From our research and first-person accounts, we saw a divide between what people are asking for and what designers are building. Many people with chronic illness are not primarily asking for prediction algorithms. They want to be heard. They want their experience validated. They want language that helps them articulate what is happening without feeling dramatic or dismissed.
+
+
+Recognizing wholeness means designing for the person, not just the pathology. Our journaling-first approach attempts to start with narrative rather than medical reduction. The tool structures symptoms, but it does not collapse someone into them. It avoids telling users what condition they likely have, because a diagnosis is not what determines someone’s worth or legitimacy.
+Our biggest fear and something we are reflecting on while driving this project forward is that this is a hard balance to strike. How do we provide clarity without reducing someone to a set of symptoms? Recognizing wholeness challenges us to design systems that support understanding without implying that a person is a problem to be solved.
+## Additional Questions
+- Is the technology ableist?
+It can be. I see a lot of these technologies online. Many of them have the best intentions. Many also have purely capitalistic motivation. They see a need and a desire from a community that is in a vulnerable situation and are taking advantage of it. A real concern that our team has is that we are just adding to the list of technologies that are attempting to solve this very real problem. How we have decided to move forward with our project is that ethics and morality play a much larger role than anything technical. The technical side of this project is not a major undertaking to get a minimally viable solution. What will likely not get solved in the four weeks of this course and will be our continuing goal is how can this help people and contribute meaningfully.
+- Is the technology informed by by disabled perspective?
+It is and will continue to be. We are lucky to have someone that would be a user of this technology in our group, which helps a lot with informing design choices and where we put our focus. We are also aware, though, that one person’s experience doesn’t speak for the whole community of people that could use this technology. I (Ally) do have chronic health problems, but I am also a person who has a doctor as a mom who helps me stand up for myself in the medical system, a person who has the money to focus on health when necessary, and a person with parents that have pointed out symptoms I would’ve otherwise not noticed or written off. It’s really important that we keep our minds wider than just my perspective, which is why we have both been doing so much research about how people interact with (or don’t interact with) technology to help navigate chronic illnesses and diagnosis. Any single person could want to use a tool like this slightly differently, which is why we are focused on creating a toolbox that people can use as they see fit, rather than an all-encompassing solution to the problem of identifying and diagnosing illnesses.
+- Does it oversimplify disability/ability? 
+In some ways, yes. There are so many factors and intricacies when it comes to health problems, and we are aware that there are some factors that technology simply cannot account for. For example, a first person account we found talked about how they have a close friend or family member point out changes they’ve noticed before going to the doctor, which is something that I (Ally) have had a lot of success with too. Because we are only working with a user’s own input, their perceptions and biases will still impact the results they see from this tool. For example, if someone has been raised to think that being tired all the time is normal, they may not even think to bring it up to our system, which means that we couldn’t use that information in any way. Because this is always going to be a problem in these situations, it is imperative that we make it clear to users that this isn’t a complete solution to health problems and that information from our tool shouldn’t be taken as the ground truth. Also, by bringing up information in an agnostic way, we can try to present health data and information as information that may be useful for the user to know, rather than persuasive evidence for or against a certain diagnosis for the user.
+
+
+
+
+
+
+
+
+
 
 
 ## Getting started
