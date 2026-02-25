@@ -6,11 +6,11 @@
 ### Disability Justice Principle 1 **INTERSECTIONALITY**
 
 
-###Definition
+### Definition
 As this is the first listed disability justice, it is fitting that this project starts here. This principle begins with the statement from Sins Invalid: “We do not live single issue lives.” Intersectionality reminds us that disability is never experienced in isolation. Ableism is entangled with racism, sexism, classism, fatphobia, transphobia, and other systems of oppression. Disability justice insists that we recognize how these systems interact rather than treating disability as a standalone category.
 
 
-###Reflection
+### Reflection
 Chronic illness especially illustrates this principle. It does not exist in a vacuum. It intersects with gender, race, income, immigration status, trauma history, and access to healthcare. The way someone’s symptoms are interpreted, believed, or dismissed often depends on these intersecting identities. For example, research consistently shows that women, particularly women of color, have their pain minimized or misattributed. The experience of illness is therefore shaped not just by biology, but by power.
 
 
@@ -29,13 +29,13 @@ I would argue that we are not trying to untangle these threads and rather allow 
 ### Disability Justice Principle 2 - **RECONGIZING WHOLENESS**
 
 
-###Definition
+### Definition
 
 
 “People have inherent worth” is how Sins Invalid begins this principle. It is beautiful in its simplicity and powerful in its implication. It directly challenges a cultural norm that measures people by productivity, diagnosis, or usefulness. If you are not contributing in ways that society values, you are often treated as less than. Recognizing wholeness rejects that framework. It insists that people are complete, complex, and valuable beyond what they produce or what can be medically categorized.
 
 
-###Reflection
+### Reflection
 
 
 I think this principle shows up in our project most clearly in what we are not trying to build. Diagnosis is not our goal. Traditional symptom checkers often push toward ranking possible conditions, reducing someone’s experience into probabilities and medical labels. That framing subtly communicates that clarity, certainty, and classification are what make an experience legitimate.
