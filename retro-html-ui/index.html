@@ -33,7 +33,7 @@
 
           <h4>Agents</h4>
           <div class="control-row">
-            <select id="agents" ></select>
+            <select id="agents"></select>
             <select id="save_to">
               <option value="">No save</option>
               <option value="journal">journal</option>
@@ -42,6 +42,11 @@
               <option value="drafts">drafts</option>
               <option value="audit_logs">audit_logs</option>
             </select>
+          </div>
+          <div class="control-row" id="pipeline-controls">
+            <label><input type="checkbox" id="node-definer" checked /> definer</label>
+            <label><input type="checkbox" id="node-redditor" checked /> redditor</label>
+            <label><input type="checkbox" id="node-engager" checked /> engager</label>
           </div>
         </div>
 

@@ -19,6 +19,15 @@ $env:OPENAI_API_KEY="your-key"
 python -m uvicorn backend.app.main:app --reload
 ```
 
+## Architecture implemented
+
+- Leader-first orchestration (`yapper`) using LangChain `create_agent`
+- Toggleable supporting nodes: `definer`, `redditor`, `engager`
+- Aggregator pass to remove duplicate statements
+- Always-on `auditor` pass to enforce non-diagnostic output constraints
+- Session-level memory only (in-memory, no long-term PHI persistence)
+- Local subreddit search integration (`pmdd_search/pmdd.json`)
+
 ## API endpoints
 
 - `GET /health`
@@ -26,26 +35,25 @@ python -m uvicorn backend.app.main:app --reload
 - `POST /search`
 - `POST /chat`
 - `POST /memory`
-- `GET /memory/{bucket}`
+- `GET /memory/{bucket}?session_id=default`
 
-## Frontend CORS
+## `/chat` payload (backward compatible)
 
-The backend currently allows these local origins:
-- `http://localhost:5173`
-- `http://127.0.0.1:5173`
-- `http://localhost:5500`
-- `http://127.0.0.1:5500`
-
-## Example request
-
-```powershell
-curl -X POST "http://127.0.0.1:8000/chat" `
-  -H "Content-Type: application/json" `
-  -d "{\"message\":\"I have headaches around my cycle and fatigue\",\"active_agent\":\"redditor\",\"enabled_agents\":[\"redditor\"],\"save_to\":\"journal\"}"
+```json
+{
+  "message": "I have headaches around my cycle and fatigue",
+  "active_agent": "yapper",
+  "enabled_agents": ["yapper", "definer", "redditor", "engager"],
+  "model_name": "gpt-4o-mini",
+  "save_to": "journal",
+  "session_id": "default"
+}
 ```
+
+`session_id` is optional and defaults to `default`.
 
 ## Notes
 
-- This is intentionally lightweight for testing architecture and flow.
-- The `redditor` agent enriches answers with local thread matches from `pmdd.json`.
-- No diagnosis logic is implemented; prompts keep the tool non-diagnostic.
+- The frontend can stay unchanged and continue calling `/chat` the same way.
+- `auditor` is always executed before returning the final response.
+- Outputs are support-oriented and intentionally non-diagnostic.

@@ -1,52 +1,120 @@
+﻿import json
+import os
+import re
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from textwrap import dedent
 from typing import Any
-import os
-from pathlib import Path
 
-from langchain_core.prompts import ChatPromptTemplate
+from langchain.agents import create_agent
+from langchain.tools import tool
 from langchain_openai import ChatOpenAI
 
+from .search_tool import search_posts
 
-AGENT_PROMPTS = {
-    "yapper": dedent(
-        """
-        You are "The Yapper", a curious and supportive journaling assistant.
-        Help users describe symptoms and lived experience in detail.
-        Do not diagnose. Keep language non-diagnostic and suggest professional care when relevant.
-        """
-    ).strip(),
-    "definer": dedent(
-        """
-        You are "The Definer", focused on clear medical definitions.
-        Explain terms plainly and avoid diagnosis.
-        Include short, neutral explanations and mention uncertainty when appropriate.
-        """
-    ).strip(),
-    "redditor": dedent(
-        """
-        You are "The Redditor", focused on community discovery.
-        Use provided thread context to suggest relevant communities/posts.
-        Do not claim medical certainty and do not present diagnosis.
-        """
-    ).strip(),
-    "engager": dedent(
-        """
-        You are "The Engager", helping draft respectful community or doctor-facing messages.
-        Keep tone clear, ethical, and non-diagnostic.
-        """
-    ).strip(),
-    "auditor": dedent(
-        """
-        You are "The Auditor", focused on safety and ethics.
-        Flag risky phrasing, overconfident diagnosis language, or unsafe advice.
-        Suggest safer rewrites.
-        """
-    ).strip(),
-}
+NODE_NAMES = ["yapper", "definer", "redditor", "engager", "auditor"]
+SUPPORTING_NODES = {"definer", "redditor", "engager"}
+
+DEFINER_PROMPT = dedent(
+    """
+    You are the Definer node.
+    Translate symptom language to standardized terminology and plain-language definitions.
+    Do not diagnose.
+    Return JSON ONLY:
+    {
+      "standardized_symptom_list": ["string"],
+      "definitions": [{"term": "string", "definition": "string"}],
+      "evidence_mapping": ["string"]
+    }
+    """
+).strip()
+
+REDDITOR_PROMPT = dedent(
+    """
+    You are the Redditor node.
+    Use subreddit_search to find ethically useful community threads.
+    Do not claim diagnoses.
+    Return JSON ONLY:
+    {
+      "relevant_threads": [{"title": "string", "url": "string", "summary": "string", "score": 0.0}],
+      "subreddit_metadata": ["string"]
+    }
+    """
+).strip()
+
+ENGAGER_PROMPT = dedent(
+    """
+    You are the Engager node.
+    Draft a respectful community post and questions for a medical professional.
+    Keep language non-diagnostic.
+    Return JSON ONLY:
+    {
+      "draft_message": "string",
+      "posting_guidelines": ["string"],
+      "questions_for_medical_professional": ["string"]
+    }
+    """
+).strip()
+
+AUDITOR_PROMPT = dedent(
+    """
+    You are the Auditor node and are always active.
+    Check for diagnosing language, treatment recommendations, probabilistic claims, and alarmist framing.
+    Rewrite risky language safely.
+    Return JSON ONLY:
+    {
+      "flagged_segments": ["string"],
+      "revision_suggestions": ["string"],
+      "safe_output": "string"
+    }
+    """
+).strip()
+
+LEADER_RESPONSE_PROMPT = dedent(
+    """
+    You are the leader assistant speaking directly to the user.
+    Give a concise, supportive, non-diagnostic response in plain language.
+    Do not draft a community post unless the user explicitly asks for one.
+    Include at most:
+    - a short acknowledgement of what they shared
+    - 1-3 clarifying follow-up questions when useful
+    - a brief safety note to seek a clinician if symptoms worsen or are severe
+    """
+).strip()
 
 
 def available_agents() -> list[str]:
-    return list(AGENT_PROMPTS.keys())
+    return list(NODE_NAMES)
+
+
+def _leader_prompt_for(active_agent: str) -> str:
+    role_guidance = {
+        "yapper": "Prioritize narrative parsing and symptom extraction.",
+        "definer": "Prioritize precise symptom terminology and uncertainty boundaries.",
+        "redditor": "Prioritize ethically sourcing community-search keywords and context.",
+        "engager": "Prioritize respectful drafting and actionable follow-up questions.",
+        "auditor": "Prioritize risk-sensitive interpretation and conservative wording.",
+    }
+    guidance = role_guidance.get(active_agent, role_guidance["yapper"])
+    return dedent(
+        f"""
+        You are the Leader Node and your active style is "{active_agent}".
+        {guidance}
+        You must NOT diagnose, prescribe treatments, or claim certainty.
+        Parse user free-form text into JSON ONLY with this schema:
+        {{
+          "narrative_summary": "string",
+          "candidate_symptoms": ["string"],
+          "questions_to_clarify": ["string"],
+          "research_keywords": ["string"],
+          "engagement_ready": false,
+          "raw_symptom_phrases": ["string"],
+          "timeline_information": "string",
+          "reported_impacts": ["string"],
+          "uncertainties": ["string"]
+        }}
+        """
+    ).strip()
 
 
 def _load_key_from_dotenv(dotenv_path: Path) -> str | None:
@@ -60,10 +128,8 @@ def _load_key_from_dotenv(dotenv_path: Path) -> str | None:
         name, value = line.split("=", 1)
         if name.strip() != "OPENAI_API_KEY":
             continue
-
         key = value.strip().strip('"').strip("'")
         return key or None
-
     return None
 
 
@@ -73,7 +139,6 @@ def _resolve_openai_api_key() -> str:
         return env_key
 
     project_root = Path(__file__).resolve().parents[2]
-
     dotenv_key = _load_key_from_dotenv(project_root / ".env")
     if dotenv_key:
         return dotenv_key
@@ -89,45 +154,325 @@ def _resolve_openai_api_key() -> str:
     )
 
 
-def _agent_chain(agent: str, model_name: str):
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", AGENT_PROMPTS[agent]),
-            (
-                "user",
-                dedent(
-                    """
-                    User message:
-                    {message}
+def _make_model(model_name: str) -> ChatOpenAI:
+    return ChatOpenAI(model=model_name, temperature=0.2, api_key=_resolve_openai_api_key())
 
-                    Optional context:
-                    {context}
-                    """
-                ).strip(),
-            ),
-        ]
+
+def _extract_text(result: dict[str, Any]) -> str:
+    message = result["messages"][-1]
+    text = getattr(message, "text", None)
+    if isinstance(text, str) and text.strip():
+        return text
+
+    content = getattr(message, "content", "")
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        chunks: list[str] = []
+        for item in content:
+            if isinstance(item, dict) and "text" in item and isinstance(item["text"], str):
+                chunks.append(item["text"])
+            elif isinstance(item, str):
+                chunks.append(item)
+        return "\n".join(chunks)
+    return str(content)
+
+
+def _parse_json(text: str, fallback: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        match = re.search(r"\{[\s\S]*\}", text)
+        if match:
+            try:
+                return json.loads(match.group(0))
+            except json.JSONDecodeError:
+                return fallback
+    return fallback
+
+
+def _build_message(history: list[dict[str, str]], payload: dict[str, Any]) -> str:
+    history_text = "\n".join(f"{item.get('role', 'user')}: {item.get('content', '')}" for item in history[-8:])
+    return dedent(
+        f"""
+        Conversation history:
+        {history_text if history_text else "(none)"}
+
+        Payload JSON:
+        {json.dumps(payload, ensure_ascii=True)}
+        """
+    ).strip()
+
+
+@tool
+def subreddit_search(query: str, limit: int = 5) -> str:
+    """Search local subreddit index for relevant threads."""
+    return json.dumps(search_posts(query, limit=limit), ensure_ascii=True)
+
+
+def _invoke_node(system_prompt: str, model_name: str, user_content: str, tools: list[Any] | None = None) -> str:
+    agent = create_agent(_make_model(model_name), tools=tools or [], system_prompt=system_prompt)
+    result = agent.invoke({"messages": [{"role": "user", "content": user_content}]})
+    return _extract_text(result)
+
+
+def _dedupe_lines(lines: list[str]) -> list[str]:
+    seen: set[str] = set()
+    deduped: list[str] = []
+    for line in lines:
+        normalized = re.sub(r"\s+", " ", line.strip().lower())
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(line.strip())
+    return deduped
+
+
+def _normalize_enabled_agents(active_agent: str, enabled_agents: list[str]) -> list[str]:
+    if enabled_agents:
+        enabled = {name for name in enabled_agents if name in SUPPORTING_NODES}
+    else:
+        enabled = set(SUPPORTING_NODES)
+    if active_agent in enabled:
+        enabled.remove(active_agent)
+    return sorted(enabled)
+
+
+def _should_run_engager(message: str, leader_output: dict[str, Any]) -> bool:
+    if bool(leader_output.get("engagement_ready", False)):
+        return True
+    text = message.lower()
+    triggers = ["draft", "write", "post", "reddit", "community", "message", "send this"]
+    return any(trigger in text for trigger in triggers)
+
+
+def _build_leader_response(
+    model_name: str,
+    message: str,
+    conversation_history: list[dict[str, str]],
+    leader_output: dict[str, Any],
+) -> str:
+    request = _build_message(
+        conversation_history,
+        {
+            "user_prompt": message,
+            "leader_output": leader_output,
+            "task": "Respond to the user directly as the leader assistant",
+        },
     )
-    llm = ChatOpenAI(model=model_name, temperature=0.2, api_key=_resolve_openai_api_key())
-    return prompt | llm
+    return _invoke_node(LEADER_RESPONSE_PROMPT, model_name, request)
 
 
-def run_agent(
-    agent: str,
+def _aggregate_outputs(
+    leader_response: str,
+    leader_output: dict[str, Any],
+    node_outputs: dict[str, dict[str, Any]],
+) -> str:
+    lines: list[str] = []
+    if leader_response.strip():
+        lines.append(leader_response.strip())
+
+    definer = node_outputs.get("definer", {})
+    definitions = definer.get("definitions", []) if isinstance(definer, dict) else []
+    if isinstance(definitions, list) and definitions:
+        term_lines: list[str] = []
+        for item in definitions[:3]:
+            if not isinstance(item, dict):
+                continue
+            term = str(item.get("term", "")).strip()
+            definition = str(item.get("definition", "")).strip()
+            if term and definition:
+                term_lines.append(f"- {term}: {definition}")
+        if term_lines:
+            lines.append("Possible terms to research:")
+            lines.extend(term_lines)
+
+    redditor = node_outputs.get("redditor", {})
+    threads = redditor.get("relevant_threads", []) if isinstance(redditor, dict) else []
+    if isinstance(threads, list) and threads:
+        thread_lines: list[str] = []
+        for thread in threads[:2]:
+            if not isinstance(thread, dict):
+                continue
+            title = str(thread.get("title", "")).strip()
+            url = str(thread.get("url", "")).strip()
+            if title and url:
+                thread_lines.append(f"- {title} ({url})")
+        if thread_lines:
+            lines.append("Community threads you could review:")
+            lines.extend(thread_lines)
+
+    engager = node_outputs.get("engager", {})
+    draft_message = str(engager.get("draft_message", "")).strip() if isinstance(engager, dict) else ""
+    if draft_message:
+        lines.append("Draft message (optional):")
+        lines.append(draft_message)
+
+    candidate_symptoms = leader_output.get("candidate_symptoms", [])
+    if isinstance(candidate_symptoms, list) and candidate_symptoms:
+        joined = ", ".join(str(item) for item in candidate_symptoms[:5])
+        lines.append(f"Captured symptom keywords: {joined}")
+
+    return "\n".join(_dedupe_lines(lines))
+
+
+def _rule_based_audit(text: str) -> list[str]:
+    checks = [
+        r"\byou (have|likely have|definitely have)\b",
+        r"\bdiagnos(is|e|ed)\b",
+        r"\bcure\b",
+        r"\bguarantee(d)?\b",
+        r"\b\d{1,3}%\b",
+        r"\bmust take\b",
+    ]
+    flags: list[str] = []
+    lowered = text.lower()
+    for pattern in checks:
+        if re.search(pattern, lowered):
+            flags.append(f"Matched risky pattern: {pattern}")
+    return flags
+
+
+def run_orchestration(
     message: str,
     model_name: str,
-    context: str = "",
-) -> str:
-    if agent not in AGENT_PROMPTS:
-        raise ValueError(f"Unknown agent: {agent}")
-    chain = _agent_chain(agent, model_name)
-    result = chain.invoke({"message": message, "context": context})
-    return result.content if isinstance(result.content, str) else str(result.content)
+    conversation_history: list[dict[str, str]],
+    active_agent: str,
+    enabled_agents: list[str],
+    search_query: str | None = None,
+) -> dict[str, Any]:
+    if active_agent not in NODE_NAMES:
+        raise ValueError(f"Unknown leader node: {active_agent}")
 
+    leader_payload = {"user_prompt": message}
+    leader_request = _build_message(conversation_history, leader_payload)
+    leader_text = _invoke_node(_leader_prompt_for(active_agent), model_name, leader_request)
+    leader_output = _parse_json(
+        leader_text,
+        {
+            "narrative_summary": leader_text.strip(),
+            "candidate_symptoms": [],
+            "questions_to_clarify": [],
+            "research_keywords": [],
+            "engagement_ready": False,
+            "raw_symptom_phrases": [],
+            "timeline_information": "",
+            "reported_impacts": [],
+            "uncertainties": [],
+        },
+    )
+    leader_response = _build_leader_response(model_name, message, conversation_history, leader_output)
 
-def format_redditor_context(search_results: list[dict[str, Any]]) -> str:
-    if not search_results:
-        return "No matching local Reddit threads found."
-    lines = ["Candidate threads:"]
-    for idx, row in enumerate(search_results, start=1):
-        lines.append(f"{idx}. {row['title']} ({row['url']}) score={row['score']}")
-    return "\n".join(lines)
+    selected_supporting_nodes = _normalize_enabled_agents(active_agent, enabled_agents)
+    if "engager" in selected_supporting_nodes and not _should_run_engager(message, leader_output):
+        selected_supporting_nodes = [name for name in selected_supporting_nodes if name != "engager"]
+
+    node_outputs: dict[str, dict[str, Any]] = {}
+    thread_summaries: list[dict[str, Any]] = []
+
+    def run_definer() -> tuple[str, dict[str, Any]]:
+        request = _build_message(
+            conversation_history,
+            {
+                "leader_output": leader_output,
+                "task": "standardize symptom terms and define them plainly",
+            },
+        )
+        text = _invoke_node(DEFINER_PROMPT, model_name, request)
+        return "definer", _parse_json(text, {"standardized_symptom_list": [], "definitions": [], "evidence_mapping": []})
+
+    def run_redditor() -> tuple[str, dict[str, Any]]:
+        keywords = leader_output.get("research_keywords", [])
+        query = search_query or (" ".join(str(item) for item in keywords if str(item).strip()) or message)
+        request = _build_message(
+            conversation_history,
+            {
+                "leader_output": leader_output,
+                "search_query": query,
+                "task": "find relevant discussion threads and summarize relevance",
+            },
+        )
+        text = _invoke_node(REDDITOR_PROMPT, model_name, request, tools=[subreddit_search])
+        parsed = _parse_json(text, {"relevant_threads": [], "subreddit_metadata": []})
+        return "redditor", parsed
+
+    def run_engager() -> tuple[str, dict[str, Any]]:
+        request = _build_message(
+            conversation_history,
+            {
+                "leader_output": leader_output,
+                "task": "draft a respectful post and medical appointment questions",
+            },
+        )
+        text = _invoke_node(ENGAGER_PROMPT, model_name, request)
+        parsed = _parse_json(
+            text,
+            {
+                "draft_message": text.strip(),
+                "posting_guidelines": [],
+                "questions_for_medical_professional": [],
+            },
+        )
+        return "engager", parsed
+
+    workers: dict[str, Any] = {
+        "definer": run_definer,
+        "redditor": run_redditor,
+        "engager": run_engager,
+    }
+
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = [executor.submit(workers[name]) for name in selected_supporting_nodes if name in workers]
+        for future in futures:
+            try:
+                name, parsed = future.result()
+            except Exception:
+                continue
+            else:
+                node_outputs[name] = parsed
+                if name == "redditor":
+                    threads = parsed.get("relevant_threads", [])
+                    if isinstance(threads, list):
+                        thread_summaries = [item for item in threads if isinstance(item, dict)]
+
+    aggregated_output = _aggregate_outputs(leader_response, leader_output, node_outputs)
+    rule_flags = _rule_based_audit(aggregated_output)
+
+    audit_request = _build_message(
+        conversation_history,
+        {
+            "aggregated_output": aggregated_output,
+            "required_constraints": [
+                "No diagnosis",
+                "No treatment prescription",
+                "No probabilistic certainty",
+                "No alarmist framing",
+            ],
+        },
+    )
+    audit_text = _invoke_node(AUDITOR_PROMPT, model_name, audit_request)
+    audit_output = _parse_json(
+        audit_text,
+        {
+            "flagged_segments": [],
+            "revision_suggestions": [],
+            "safe_output": aggregated_output,
+        },
+    )
+
+    combined_flags = []
+    combined_flags.extend(str(item) for item in audit_output.get("flagged_segments", []) if str(item).strip())
+    combined_flags.extend(rule_flags)
+    audit_output["flagged_segments"] = _dedupe_lines(combined_flags)
+
+    safe_output = str(audit_output.get("safe_output", "")).strip() or aggregated_output
+    return {
+        "response": safe_output,
+        "leader_response": leader_response,
+        "leader_output": leader_output,
+        "supporting_outputs": node_outputs,
+        "aggregated_output": aggregated_output,
+        "audit_output": audit_output,
+        "selected_supporting_nodes": selected_supporting_nodes,
+        "thread_summaries": thread_summaries,
+    }

@@ -19,6 +19,9 @@ const currentRoomEl = document.getElementById("currentroom");
 const agentSelect = document.getElementById("agent") || document.getElementById("agents");
 const modelInput = document.getElementById("model");
 const saveToSelect = document.getElementById("save_to");
+const nodeDefiner = document.getElementById("node-definer");
+const nodeRedditor = document.getElementById("node-redditor");
+const nodeEngager = document.getElementById("node-engager");
 const chatForm = document.getElementById("chat-form");
 const messageInput = document.getElementById("messagevalue");
 const chatLog = document.getElementById("chatlog");
@@ -380,6 +383,18 @@ function renderAgentOptions(agents) {
   });
 }
 
+function currentSessionId() {
+  return `${currentUser}::${currentRoom}`;
+}
+
+function selectedSupportingNodes() {
+  const nodes = [];
+  if (nodeDefiner && nodeDefiner.checked) nodes.push("definer");
+  if (nodeRedditor && nodeRedditor.checked) nodes.push("redditor");
+  if (nodeEngager && nodeEngager.checked) nodes.push("engager");
+  return nodes;
+}
+
 async function login() {
   const draft = usernameInput.value.trim();
   if (!draft) return;
@@ -418,12 +433,14 @@ async function sendMessage(event) {
   setError("");
 
   const activeAgent = (agentSelect && agentSelect.value) || currentAgents[0] || "yapper";
+  const enabledAgents = Array.from(new Set([activeAgent, ...selectedSupportingNodes()]));
   const payload = {
     message,
     active_agent: activeAgent,
-    enabled_agents: [activeAgent],
+    enabled_agents: enabledAgents,
     model_name: (modelInput && modelInput.value.trim()) || "gpt-4o-mini",
     save_to: saveToSelect.value || undefined,
+    session_id: currentSessionId(),
   };
 
   sendBtn.disabled = true;
@@ -441,9 +458,21 @@ async function sendMessage(event) {
     }
 
     const data = await res.json();
-    const assistantLine = `${data.active_agent}: ${data.response}`;
-    appendLine("assistant", assistantLine);
-    persistLine("assistant", assistantLine);
+    if (Array.isArray(data.agent_messages) && data.agent_messages.length > 0) {
+      data.agent_messages.forEach((msg) => {
+        if (!msg || typeof msg !== "object") return;
+        const agent = typeof msg.agent === "string" ? msg.agent : data.active_agent;
+        const text = typeof msg.text === "string" ? msg.text : "";
+        if (!text.trim()) return;
+        const assistantLine = `${agent}: ${text}`;
+        appendLine("assistant", assistantLine);
+        persistLine("assistant", assistantLine);
+      });
+    } else {
+      const assistantLine = `${data.active_agent}: ${data.response}`;
+      appendLine("assistant", assistantLine);
+      persistLine("assistant", assistantLine);
+    }
   } catch (err) {
     setError(err instanceof Error ? err.message : "Failed to send message");
   } finally {
