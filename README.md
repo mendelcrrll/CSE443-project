@@ -56,13 +56,13 @@ In some ways, yes. There are so many factors and intricacies when it comes to he
 
 
 
+## Image Alt Text
 
+![Storyboard showing progressive chatroom interface with toggleable tools (mapper, definer, redditor, engager, auditor) on the left and a central chat area. The sequence demonstrates a user venting, a tool adding a definition with a “save definition” option, notes being added, and the interface evolving as responses appear. Annotations mention hover descriptions and possibly converting toggle tools into a dropdown.](./assets/image1)
 
+![Storyboard of chatroom navigation flow. The first frame shows a “Chatrooms” panel with “previous chats” and “new chat.” The next frame expands previous chats into a scrollable list. The final frame shows a selected chatroom with metadata (date and topic) and collapsible sections for summary, definitions, Reddit threads, and research topics.](./assets/image2)
 
-
-
-
-
+![Storyboard labeled “Task 1: Venting/Mapping.” It shows a user starting a new chat, typing a message (“I’m feeling very…”), and receiving structured responses in a chat interface. A left sidebar contains toggle tools (mapper, definer, redditor, engager, auditor), and the sequence illustrates the chat growing with multiple message bubbles as tools assist the conversation.](./assets/image3)
 
 ## Getting started
 
