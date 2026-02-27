@@ -26,7 +26,7 @@ python -m uvicorn backend.app.main:app --reload
 - Aggregator pass to remove duplicate statements
 - Always-on `auditor` pass to enforce non-diagnostic output constraints
 - Session-level memory persisted to local SQLite (`backend/data/local.db`)
-- Local subreddit search integration (`pmdd_search/pmdd.json`)
+- Local subreddit search integration (`backend/data/pmdd.json`)
 
 ## API endpoints
 
@@ -36,6 +36,7 @@ python -m uvicorn backend.app.main:app --reload
 - `POST /chat`
 - `POST /memory`
 - `GET /memory/{bucket}?session_id=default`
+- `POST /session/delete`
 
 ## `/chat` payload (backward compatible)
 

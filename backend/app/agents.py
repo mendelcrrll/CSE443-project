@@ -15,6 +15,19 @@ from .search_tool import search_posts
 NODE_NAMES = ["yapper", "definer", "redditor", "engager", "auditor"]
 SUPPORTING_NODES = {"definer", "redditor", "engager"}
 
+# Below are prompts for each node define their specific roles and expected JSON outputs, 
+# guiding them to process the user's input in a structured way while adhering 
+# to constraints like avoiding diagnoses or treatment recommendations. 
+
+# The leader prompt is dynamically adjusted based on the active agent's style, 
+# providing tailored guidance for parsing the user's narrative and 
+# extracting relevant information.
+
+# The definer prompt instructs the Definer node to translate symptom language into 
+# standardized terminology and plain-language definitions, 
+# emphasizing that it should not make diagnoses. The expected output is 
+# a JSON object containing a list of standardized symptoms, definitions 
+# for relevant terms, and an evidence mapping.
 DEFINER_PROMPT = dedent(
     """
     You are the Definer node.
@@ -29,6 +42,13 @@ DEFINER_PROMPT = dedent(
     """
 ).strip()
 
+# The prompt for the Redditor node instructs it to search for relevant threads 
+# in a local subreddit index, summarize their relevance, 
+# and return structured information about the threads and subreddit metadata. 
+# It emphasizes ethical sourcing of keywords and context, 
+# and explicitly prohibits making diagnoses. 
+# The expected output is a JSON object containing a list of relevant threads with 
+# their titles, URLs, summaries, and scores, as well as any relevant subreddit metadata.
 REDDITOR_PROMPT = dedent(
     """
     You are the Redditor node.
@@ -75,10 +95,14 @@ LEADER_RESPONSE_PROMPT = dedent(
     You are the leader assistant speaking directly to the user.
     Give a concise, supportive, non-diagnostic response in plain language.
     Do not draft a community post unless the user explicitly asks for one.
+    Avoid repetitive canned closing lines (for example: "I'm here to listen and support you.").
+    End naturally based on the conversation instead of using the same sign-off each turn.
     Include at most:
     - a short acknowledgement of what they shared
     - 1-3 clarifying follow-up questions when useful
-    - a brief safety note to seek a clinician if symptoms worsen or are severe
+    - a brief safety note ONLY when there are clear red flags, severe symptoms, crisis language,
+      self-harm risk, or the user asks for diagnosis/treatment advice
+    Do NOT add a clinician reminder by default for routine symptom discussion.
     """
 ).strip()
 

@@ -47,6 +47,10 @@ class SaveRequest(BaseModel):
     session_id: str = "default"
 
 
+class DeleteSessionRequest(BaseModel):
+    session_id: str = Field(min_length=1)
+
+
 def _format_supporting_message(agent: str, payload: object) -> str | None:
     if not isinstance(payload, dict):
         return None
@@ -197,3 +201,9 @@ def list_saved(bucket: str, session_id: str = "default") -> dict[str, object]:
     if bucket not in SAVE_BUCKETS:
         raise HTTPException(status_code=400, detail=f"bucket must be one of {sorted(SAVE_BUCKETS)}")
     return {"bucket": bucket, "session_id": session_id, "items": store.list_saved(session_id, bucket)}
+
+
+@app.post("/session/delete")
+def delete_session(req: DeleteSessionRequest) -> dict[str, object]:
+    deleted = store.delete_session(req.session_id)
+    return {"status": "deleted", "session_id": req.session_id, "deleted": deleted}

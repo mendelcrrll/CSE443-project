@@ -13,6 +13,7 @@
       <div id="error" class="retro-error" hidden></div>
 
       <div id="loginpage">
+        <label for="username" class="visually-hidden">Username</label>
         <input type="text" id="username" placeholder="Username" />
         <button id="loginbutton">Join</button>
       </div>
@@ -21,33 +22,53 @@
         <div id="welcome"></div>
 
         <div id="available_rooms">
-          <h4>Chatrooms</h4>
-          <div class="control-row">
-            <select id="room-select"></select>
-            <button id="enter-room-btn" type="button">Enter Room</button>
-          </div>
-          <div class="control-row">
-            <input id="new-room-name" type="text" placeholder="New room name" />
-            <button id="create-room-btn" type="button">Create Room</button>
-          </div>
+          <details class="panel-dropdown" open>
+            <summary>Chatrooms</summary>
+            <div class="panel-body">
+              <div class="control-row">
+                <label for="room-select" class="visually-hidden">Select room</label>
+                <select id="room-select"></select>
+                <button id="enter-room-btn" type="button">Enter Room</button>
+                <button id="delete-room-btn" type="button" class="danger-btn">Delete Room</button>
+              </div>
+              <div class="control-row">
+                <label for="new-room-name" class="visually-hidden">New room name</label>
+                <input id="new-room-name" type="text" placeholder="New room name" />
+                <button id="create-room-btn" type="button">Create Room</button>
+              </div>
+            </div>
+          </details>
 
-          <h4>Agents</h4>
-          <div class="control-row">
-            <select id="agents"></select>
-            <select id="save_to">
-              <option value="">No save</option>
-              <option value="journal">journal</option>
-              <option value="definitions">definitions</option>
-              <option value="threads">threads</option>
-              <option value="drafts">drafts</option>
-              <option value="audit_logs">audit_logs</option>
-            </select>
-          </div>
-          <div class="control-row" id="pipeline-controls">
-            <label><input type="checkbox" id="node-definer" checked /> definer</label>
-            <label><input type="checkbox" id="node-redditor" checked /> redditor</label>
-            <label><input type="checkbox" id="node-engager" checked /> engager</label>
-          </div>
+          <details class="panel-dropdown" open>
+            <summary>Agents</summary>
+            <div class="panel-body">
+              <div class="agent-header">
+                <div id="leader-node" class="agent-chip fixed-chip">Leader: yapper</div>
+                <div class="agent-chip fixed-chip">Always on: auditor</div>
+              </div>
+              <div class="control-row">
+                <label for="save_to" class="visually-hidden">Save output bucket</label>
+                <select id="save_to">
+                  <option value="">No save</option>
+                  <option value="journal">journal</option>
+                  <option value="definitions">definitions</option>
+                  <option value="threads">threads</option>
+                  <option value="drafts">drafts</option>
+                  <option value="audit_logs">audit_logs</option>
+                </select>
+              </div>
+              <div id="agent-participants">
+                <div class="agent-column">
+                  <h3>Active Agents</h3>
+                  <ul id="active-agents-list" class="agent-list"></ul>
+                </div>
+                <div class="agent-column">
+                  <h3>Kicked Out Agents</h3>
+                  <ul id="kicked-agents-list" class="agent-list"></ul>
+                </div>
+              </div>
+            </div>
+          </details>
         </div>
 
         <div id="currentroom">Room: General Chat</div>
@@ -57,6 +78,7 @@
           <br />
           <div id="shortcuts">Note: Chatrooms are saved per username in this browser.</div>
           <form id="chat-form">
+            <label for="messagevalue" class="visually-hidden">Message</label>
             <input type="text" id="messagevalue" placeholder="Type a message" />
             <button id="sendbutton" type="submit">send</button>
           </form>

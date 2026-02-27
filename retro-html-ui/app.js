@@ -1,9 +1,14 @@
 const API_BASE_URL = "http://127.0.0.1:8000";
 const STORAGE_KEY = "retro_chatrooms_v1";
+const FIXED_LEADER_AGENT = "yapper";
+const ALWAYS_ACTIVE_AGENT = "auditor";
+const DEFAULT_AGENTS = [FIXED_LEADER_AGENT, "definer", "redditor", "engager", ALWAYS_ACTIVE_AGENT];
 
 let currentUser = "";
 let currentRoom = "General Chat";
-let currentAgents = ["yapper"];
+let currentAgents = [...DEFAULT_AGENTS];
+let kickableAgents = [];
+let activeSupportingAgents = [];
 
 const errorEl = document.getElementById("error");
 const loginPageEl = document.getElementById("loginpage");
@@ -15,13 +20,13 @@ const roomSelect = document.getElementById("room-select");
 const newRoomInput = document.getElementById("new-room-name");
 const createRoomBtn = document.getElementById("create-room-btn");
 const enterRoomBtn = document.getElementById("enter-room-btn");
+const deleteRoomBtn = document.getElementById("delete-room-btn");
 const currentRoomEl = document.getElementById("currentroom");
-const agentSelect = document.getElementById("agent") || document.getElementById("agents");
 const modelInput = document.getElementById("model");
 const saveToSelect = document.getElementById("save_to");
-const nodeDefiner = document.getElementById("node-definer");
-const nodeRedditor = document.getElementById("node-redditor");
-const nodeEngager = document.getElementById("node-engager");
+const leaderNodeEl = document.getElementById("leader-node");
+const activeAgentsListEl = document.getElementById("active-agents-list");
+const kickedAgentsListEl = document.getElementById("kicked-agents-list");
 const chatForm = document.getElementById("chat-form");
 const messageInput = document.getElementById("messagevalue");
 const chatLog = document.getElementById("chatlog");
@@ -362,6 +367,57 @@ function createRoom() {
   enterRoom(roomName);
 }
 
+async function deleteRoom() {
+  const roomName = (roomSelect.value || currentRoom || "").trim();
+  if (!roomName || !currentUser) return;
+
+  const shouldDelete = window.confirm(`Delete room "${roomName}"? This removes local and backend chat history.`);
+  if (!shouldDelete) return;
+
+  const sessionId = `${currentUser}::${roomName}`;
+  if (deleteRoomBtn) {
+    deleteRoomBtn.disabled = true;
+    deleteRoomBtn.textContent = "Deleting...";
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/session/delete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId }),
+    });
+    if (!res.ok) {
+      throw new Error(await res.text());
+    }
+
+    const userData = getUserData();
+    delete userData.rooms[roomName];
+
+    const remainingRooms = Object.keys(userData.rooms);
+    if (remainingRooms.length === 0) {
+      userData.rooms["General Chat"] = [];
+    }
+
+    const updatedRooms = Object.keys(userData.rooms);
+    if (roomName === currentRoom || !userData.rooms[userData.lastRoom]) {
+      currentRoom = updatedRooms[0];
+      userData.lastRoom = currentRoom;
+    }
+
+    saveUserData(userData);
+    setError("");
+    renderRoomList();
+    renderCurrentRoom();
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Failed to delete room");
+  } finally {
+    if (deleteRoomBtn) {
+      deleteRoomBtn.disabled = false;
+      deleteRoomBtn.textContent = "Delete Room";
+    }
+  }
+}
+
 async function fetchAgents() {
   const res = await fetch(`${API_BASE_URL}/agents`);
   if (!res.ok) {
@@ -372,27 +428,75 @@ async function fetchAgents() {
   return Array.isArray(data.agents) && data.agents.length ? data.agents : ["yapper"];
 }
 
-function renderAgentOptions(agents) {
-  if (!agentSelect) return;
-  agentSelect.innerHTML = "";
-  agents.forEach((agent) => {
-    const option = document.createElement("option");
-    option.value = agent;
-    option.textContent = agent;
-    agentSelect.appendChild(option);
-  });
+function initializeAgentParticipation(agents) {
+  const uniqueAgents = Array.from(new Set((Array.isArray(agents) ? agents : []).map((agent) => String(agent))));
+  currentAgents = uniqueAgents.length ? uniqueAgents : [...DEFAULT_AGENTS];
+  kickableAgents = currentAgents.filter(
+    (agent) => agent !== FIXED_LEADER_AGENT && agent !== ALWAYS_ACTIVE_AGENT
+  );
+  activeSupportingAgents = [...kickableAgents];
+  renderAgentParticipation();
 }
 
 function currentSessionId() {
   return `${currentUser}::${currentRoom}`;
 }
 
-function selectedSupportingNodes() {
-  const nodes = [];
-  if (nodeDefiner && nodeDefiner.checked) nodes.push("definer");
-  if (nodeRedditor && nodeRedditor.checked) nodes.push("redditor");
-  if (nodeEngager && nodeEngager.checked) nodes.push("engager");
-  return nodes;
+function renderAgentParticipation() {
+  if (leaderNodeEl) {
+    leaderNodeEl.textContent = `Leader: ${FIXED_LEADER_AGENT} (locked)`;
+  }
+
+  if (activeAgentsListEl) {
+    const fixedItems = `
+      <li><span class="agent-name">${FIXED_LEADER_AGENT}</span><span class="agent-muted">leader (locked)</span></li>
+      <li><span class="agent-name">${ALWAYS_ACTIVE_AGENT}</span><span class="agent-muted">safety node (locked)</span></li>
+    `;
+    const supportingItems = activeSupportingAgents
+      .map(
+        (agent) =>
+          `<li><span class="agent-name">${escapeHtml(
+            agent
+          )}</span><button type="button" class="agent-action" data-action="kick" data-agent="${escapeHtml(
+            agent
+          )}">Kick</button></li>`
+      )
+      .join("");
+    activeAgentsListEl.innerHTML = `${fixedItems}${supportingItems}`;
+  }
+
+  if (kickedAgentsListEl) {
+    const kickedAgents = kickableAgents.filter((agent) => !activeSupportingAgents.includes(agent));
+    if (!kickedAgents.length) {
+      kickedAgentsListEl.innerHTML = `<li><span class="agent-muted">No kicked out agents.</span></li>`;
+      return;
+    }
+
+    kickedAgentsListEl.innerHTML = kickedAgents
+      .map(
+        (agent) =>
+          `<li><span class="agent-name">${escapeHtml(
+            agent
+          )}</span><button type="button" class="agent-action" data-action="add" data-agent="${escapeHtml(
+            agent
+          )}">Add Back</button></li>`
+      )
+      .join("");
+  }
+}
+
+function kickAgent(agent) {
+  if (!kickableAgents.includes(agent)) return;
+  activeSupportingAgents = activeSupportingAgents.filter((name) => name !== agent);
+  renderAgentParticipation();
+}
+
+function addAgent(agent) {
+  if (!kickableAgents.includes(agent)) return;
+  if (!activeSupportingAgents.includes(agent)) {
+    activeSupportingAgents.push(agent);
+    renderAgentParticipation();
+  }
 }
 
 async function login() {
@@ -413,8 +517,9 @@ async function login() {
 
   try {
     currentAgents = await fetchAgents();
-    renderAgentOptions(currentAgents);
+    initializeAgentParticipation(currentAgents);
   } catch (err) {
+    initializeAgentParticipation(DEFAULT_AGENTS);
     setError(err instanceof Error ? err.message : "Failed to load agents");
   }
 }
@@ -432,8 +537,8 @@ async function sendMessage(event) {
   messageInput.value = "";
   setError("");
 
-  const activeAgent = (agentSelect && agentSelect.value) || currentAgents[0] || "yapper";
-  const enabledAgents = Array.from(new Set([activeAgent, ...selectedSupportingNodes()]));
+  const activeAgent = FIXED_LEADER_AGENT;
+  const enabledAgents = Array.from(new Set([activeAgent, ...activeSupportingAgents]));
   const payload = {
     message,
     active_agent: activeAgent,
@@ -495,3 +600,26 @@ newRoomInput.addEventListener("keydown", (event) => {
   }
 });
 enterRoomBtn.addEventListener("click", () => enterRoom(roomSelect.value));
+if (deleteRoomBtn) {
+  deleteRoomBtn.addEventListener("click", deleteRoom);
+}
+
+if (activeAgentsListEl) {
+  activeAgentsListEl.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.dataset.action !== "kick") return;
+    const agent = target.dataset.agent || "";
+    kickAgent(agent);
+  });
+}
+
+if (kickedAgentsListEl) {
+  kickedAgentsListEl.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (target.dataset.action !== "add") return;
+    const agent = target.dataset.agent || "";
+    addAgent(agent);
+  });
+}

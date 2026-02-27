@@ -217,3 +217,25 @@ class SessionStore:
             if isinstance(parsed, dict):
                 items.append(parsed)
         return items
+
+    def delete_session(self, session_id: str) -> dict[str, int]:
+        with self._lock:
+            with self._connection() as conn:
+                history_deleted = conn.execute(
+                    "DELETE FROM conversation_history WHERE session_id = ?",
+                    (session_id,),
+                ).rowcount
+                saved_deleted = conn.execute(
+                    "DELETE FROM saved_items WHERE session_id = ?",
+                    (session_id,),
+                ).rowcount
+                sessions_deleted = conn.execute(
+                    "DELETE FROM sessions WHERE session_id = ?",
+                    (session_id,),
+                ).rowcount
+
+        return {
+            "conversation_history": int(history_deleted or 0),
+            "saved_items": int(saved_deleted or 0),
+            "sessions": int(sessions_deleted or 0),
+        }

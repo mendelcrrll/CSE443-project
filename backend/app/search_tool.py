@@ -14,7 +14,7 @@ def _tokenize(text: str) -> list[str]:
 
 def _load_documents() -> list[dict[str, Any]]:
     repo_root = Path(__file__).resolve().parents[2]
-    json_path = repo_root / "pmdd_search" / "pmdd.json"
+    json_path = repo_root / "backend" / "data" / "pmdd.json"
     if not json_path.exists():
         return []
 
@@ -69,4 +69,3 @@ def search_posts(query: str, limit: int = 5) -> list[dict[str, Any]]:
         }
         for score, doc in scored[:limit]
     ]
-

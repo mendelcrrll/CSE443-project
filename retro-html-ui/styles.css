@@ -3,6 +3,18 @@
   font-family: sans-serif;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 body {
   margin: 0;
   background: #f8f8f8;
@@ -54,6 +66,15 @@ button {
   cursor: pointer;
 }
 
+.danger-btn {
+  background-color: #a80000;
+}
+
+.danger-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 #loginbutton {
   margin-left: auto;
   margin-right: auto;
@@ -76,6 +97,113 @@ button {
 
 #available_rooms h4 {
   margin: 4px 0;
+}
+
+.panel-dropdown {
+  border: 1px solid #333;
+  background: #ffe3eb;
+  margin-bottom: 8px;
+}
+
+.panel-dropdown > summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 18px;
+  padding: 8px 10px;
+  list-style: none;
+  border-bottom: 1px solid transparent;
+}
+
+.panel-dropdown[open] > summary {
+  border-bottom-color: #333;
+}
+
+.panel-dropdown > summary::-webkit-details-marker {
+  display: none;
+}
+
+.panel-dropdown > summary::before {
+  content: "\25B6";
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 12px;
+}
+
+.panel-dropdown[open] > summary::before {
+  content: "\25BC";
+}
+
+.panel-body {
+  padding: 8px 10px 2px;
+}
+
+.agent-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.agent-chip {
+  border: 1px solid #333;
+  background: #fff4c7;
+  color: #222;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.fixed-chip {
+  background: #dff6e4;
+}
+
+#agent-participants {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.agent-column {
+  border: 1px solid #333;
+  background: #fff;
+  padding: 8px;
+}
+
+.agent-column h5 {
+  margin: 0 0 8px;
+}
+
+.agent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.agent-list li {
+  border: 1px solid #bbb;
+  background: #f8f8f8;
+  padding: 6px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.agent-name {
+  font-size: 14px;
+}
+
+.agent-muted {
+  color: #666;
+  font-size: 12px;
+}
+
+.agent-action {
+  font-size: 13px;
+  padding: 4px 8px;
+  margin: 0;
 }
 
 .control-row label {
@@ -221,5 +349,9 @@ hr {
   #save_to {
     width: 100%;
     min-width: 0;
+  }
+
+  #agent-participants {
+    grid-template-columns: 1fr;
   }
 }
