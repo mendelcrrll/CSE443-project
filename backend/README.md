@@ -25,7 +25,7 @@ python -m uvicorn backend.app.main:app --reload
 - Toggleable supporting nodes: `definer`, `redditor`, `engager`
 - Aggregator pass to remove duplicate statements
 - Always-on `auditor` pass to enforce non-diagnostic output constraints
-- Session-level memory only (in-memory, no long-term PHI persistence)
+- Session-level memory persisted to local SQLite (`backend/data/local.db`)
 - Local subreddit search integration (`pmdd_search/pmdd.json`)
 
 ## API endpoints
@@ -57,3 +57,4 @@ python -m uvicorn backend.app.main:app --reload
 - The frontend can stay unchanged and continue calling `/chat` the same way.
 - `auditor` is always executed before returning the final response.
 - Outputs are support-oriented and intentionally non-diagnostic.
+- SQLite is built into Python, so no additional database dependency is required.
